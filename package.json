@@ -1,0 +1,19 @@
+{
+  "name": "devconnect",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start" : "node src/App.js",
+    "dev" : "nodemon src/App.js"
+  },
+  "keywords": [
+    "nodejs",
+    "javascript"
+  ],
+  "author": "Punit Dhande",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
