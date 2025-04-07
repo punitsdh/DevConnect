@@ -2,22 +2,88 @@ const express = require("express");
 const connectDB = require("./config/database");
 const app = express();
 const User = require("./models/user");
-const { isObjectIdOrHexString } = require("mongoose");
+const { isValidSignupData } = require("./utils/validation");
+const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const { userAuth } = require("./middlewares/auth");
 
 app.use(express.json());
+app.use(cookieParser());
 
 
 app.post("/signup", async (req, res) =>{
-    const user = new User(req.body);
-
+    
     try{
+        isValidSignupData(req);
+
+        const {firstName, lastName, emailId, password} = req.body;
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        const user = new User({
+            firstName, lastName, emailId, password : passwordHash,
+        });
+
         await user.save();
         res.send("User Added Successfully!");
     }
     catch(err){
-        res.status(400).send("Error saving the user:" + err.message);
+        res.status(400).send("ERROR:" + err.message);
     }
 });
+
+app.post("/login", async (req, res) => {
+    try{
+        const {emailId, password} = req.body;
+        const user = await User.findOne({emailId : emailId});
+        if(!user){
+            throw new Error("Invalid Credentials!");
+        }
+        const isPasswordValid = await user.validatePassword(password);
+        if(isPasswordValid){
+            //create jwt token
+            const token = await user.getJWT();
+
+            //Add token to cookie and send the response back to user
+            res.cookie("token", token, {
+                expires: new Date(Date.now() + 8 * 3600000),
+            });
+            res.send("Login Successful!!");
+        }
+        else{
+            throw new Error("Invalid Credentials!");
+        }
+    }
+    catch(err){
+        res.status(400).send("ERROR:" + err.message);
+    }
+});
+
+
+app.get("/profile", userAuth, async (req, res) => {
+    try{
+        const cookies = req.cookies;
+
+        const { token } = cookies;
+        if(!token){
+            throw new Error("Invalid Token!");
+        }
+
+        //validate my token
+        const decodedMessage = await jwt.verify(token, "DEV@Connect$7907");
+        const { _id } = decodedMessage;
+
+        const user = await User.findById(_id);
+        if(!user){
+            throw new Error("User does not exist");
+        }
+        res.send(user);
+    
+    }catch(err){
+        res.status(400).send("ERROR:" + err.message);
+    }
+})
 
 //get user details by email
 app.get("/user", async (req, res) => {
