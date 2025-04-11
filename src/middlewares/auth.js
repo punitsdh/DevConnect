@@ -13,12 +13,12 @@ const userAuth = async (req, res, next) => {
         if(!user) {
             throw new Error("User not found");
         }
+        req.user = user;
         next();
     }catch(err){
         res.status(400).send("ERROR: " + err.message);
     }
 };
-
 
 module.exports = {
     userAuth,
