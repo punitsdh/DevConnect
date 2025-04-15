@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
             message: `{VALUE} is not a valid gender type`
         },
     },
-    ImageUrl:{
+    imageUrl:{
         type: String,
         validate(value){
             if(!validator.isURL(value)){
@@ -59,11 +59,11 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
-    About:{
+    about:{
         type: String,
         default: "This is the default description of user!",
     },
-    Skills:{
+    skills:{
         type: [String],
     }
 },
